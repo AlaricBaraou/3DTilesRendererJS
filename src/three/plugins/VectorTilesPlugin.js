@@ -2,7 +2,7 @@
 
 import { XYZTilesPlugin } from './images/EPSGTilesPlugin.js';
 import { MVTLoader } from '../renderer/loaders/MVTLoader.js';
-import { Mesh, MeshBasicMaterial, BoxGeometry, Vector3, MathUtils, SphereGeometry, FrontSide } from 'three';
+import { Mesh, MeshBasicMaterial, Vector3, MathUtils, SphereGeometry, FrontSide } from 'three';
 import { TILE_X, TILE_Y, TILE_LEVEL } from './images/ImageFormatPlugin.js';
 import { WGS84_RADIUS } from '../../core/renderer/constants.js';
 
@@ -88,8 +88,8 @@ export class VectorTilesPlugin extends XYZTilesPlugin {
 		const centerV = ( minV + maxV ) / 2;
 
 		// Convert UV -> Lat/Lon -> Cartesian
-		const centerLon = projection.convertProjectionToLongitude( centerU );
-		const centerLat = projection.convertProjectionToLatitude( centerV );
+		const centerLon = projection.convertNormalizedToLongitude( centerU );
+		const centerLat = projection.convertNormalizedToLatitude( centerV );
 		ellipsoid.getCartographicToPosition( centerLat, centerLon, 0, _tileCenter );
 
 		// Set the group to this position
@@ -124,8 +124,8 @@ export class VectorTilesPlugin extends XYZTilesPlugin {
 					const vGlobal = MathUtils.lerp( maxV, minV, vLocal );
 
 					// D. Convert Global UV -> Lat/Lon
-					const lon = projection.convertProjectionToLongitude( uGlobal );
-					const lat = projection.convertProjectionToLatitude( vGlobal );
+					const lon = projection.convertNormalizedToLongitude( uGlobal );
+					const lat = projection.convertNormalizedToLatitude( vGlobal );
 
 					// E. Convert Lat/Lon -> World Cartesian
 					// Assuming altitude 0 for now
