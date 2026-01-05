@@ -3,16 +3,31 @@
 
 import { LoaderBase } from './LoaderBase.js';
 import { VectorTile } from '@mapbox/vector-tile';
+import { Points } from '@react-three/drei';
 import Protobuf from 'pbf';
+import { BufferGeometry, DefaultLoadingManager, Float32BufferAttribute, Group, PointsMaterial } from 'three';
 
 export class MVTLoaderBase extends LoaderBase {
 
+	constructor( manager = DefaultLoadingManager ) {
+
+		super();
+		this.manager = manager;
+		// Default red dots for debugging
+		this.defaultPointsMaterial = new PointsMaterial( { color: 0xff0000, size: 20, sizeAttenuation: false } );
+
+	}
+
 	parse( buffer ) {
 
-		const vectorTile = new VectorTile( new Protobuf( buffer ) );
-		return Promise.resolve( { vectorTile } );
+		const pbf = new Protobuf( buffer );
+		const vectorTile = new VectorTile( pbf );
+
+		// Return a structure consistent with PNTSLoaderBase/B3DMLoaderBase
+		return Promise.resolve( {
+			vectorTile
+		} );
 
 	}
 
 }
-

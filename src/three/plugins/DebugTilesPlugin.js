@@ -43,6 +43,7 @@ const RANDOM_COLOR = 7;
 const RANDOM_NODE_COLOR = 8;
 const CUSTOM_COLOR = 9;
 const LOAD_ORDER = 10;
+const VISIBILITY = 11;
 
 const ColorModes = Object.freeze( {
 	NONE,
@@ -56,6 +57,7 @@ const ColorModes = Object.freeze( {
 	RANDOM_NODE_COLOR,
 	CUSTOM_COLOR,
 	LOAD_ORDER,
+	VISIBILITY,
 } );
 
 export class DebugTilesPlugin {
@@ -276,6 +278,7 @@ export class DebugTilesPlugin {
 		tiles.addEventListener( 'dispose-model', this._onDisposeModelCB );
 		tiles.addEventListener( 'update-after', this._onUpdateAfterCB );
 		tiles.addEventListener( 'tile-visibility-change', this._onTileVisibilityChangeCB );
+
 
 		this._initExtremes();
 
@@ -607,6 +610,15 @@ export class DebugTilesPlugin {
 
 						}
 
+						// --- NEW CASE ---
+						case VISIBILITY: {
+
+							// Rendered meshes are always "visible=true"
+							c.material.color.setHex( 0x00FF00 );
+							break;
+
+						}
+
 					}
 
 				}
@@ -761,8 +773,12 @@ export class DebugTilesPlugin {
 		const sphereGroup = this.sphereGroup;
 		const boxGroup = this.boxGroup;
 		const regionGroup = this.regionGroup;
+		const isVisibilityMode = this.colorMode === VISIBILITY;
 
-		if ( visible && ( cached.boxHelperGroup == null && cached.sphereHelper == null && cached.regionHelper == null ) ) {
+		// If in visibility debug mode, force display even if invisible (to show "false" state)
+		const shouldDisplay = visible || isVisibilityMode;
+
+		if ( shouldDisplay && ( cached.boxHelperGroup == null && cached.sphereHelper == null && cached.regionHelper == null ) ) {
 
 			this._createBoundHelper( tile );
 
@@ -772,7 +788,7 @@ export class DebugTilesPlugin {
 		const sphereHelper = cached.sphereHelper;
 		const regionHelper = cached.regionHelper;
 
-		if ( ! visible ) {
+		if ( ! shouldDisplay ) {
 
 			if ( boxHelperGroup ) {
 
@@ -794,13 +810,27 @@ export class DebugTilesPlugin {
 
 		} else {
 
-			// TODO: consider updating the volumes based on the bounding regions here in case they've been changed
+			// Color Coding for Bounds: Green = Visible, Red = Hidden
+			const colorHex = visible ? 0x00FF00 : 0xFF0000;
+
 			if ( boxHelperGroup ) {
 
 				boxGroup.add( boxHelperGroup );
 				boxHelperGroup.updateMatrixWorld( true );
 
 				this._updateHelperMaterial( tile, boxHelperGroup.children[ 0 ].material );
+
+				// Override color if in Visibility mode
+				if ( isVisibilityMode ) {
+
+					boxHelperGroup.children[ 0 ].material.color.setHex( colorHex );
+
+				} else {
+
+					// Reset to random color if leaving visibility mode
+					boxHelperGroup.children[ 0 ].material.color.copy( getIndexedRandomColor( tile.__depth ) );
+
+				}
 
 			}
 
@@ -811,6 +841,17 @@ export class DebugTilesPlugin {
 
 				this._updateHelperMaterial( tile, sphereHelper.material );
 
+				// Override color if in Visibility mode
+				if ( isVisibilityMode ) {
+
+					sphereHelper.material.color.setHex( colorHex );
+
+				} else {
+
+					sphereHelper.material.color.copy( getIndexedRandomColor( tile.__depth ) );
+
+				}
+
 			}
 
 			if ( regionHelper ) {
@@ -819,6 +860,17 @@ export class DebugTilesPlugin {
 				regionHelper.updateMatrixWorld( true );
 
 				this._updateHelperMaterial( tile, regionHelper.material );
+
+				// Override color if in Visibility mode
+				if ( isVisibilityMode ) {
+
+					regionHelper.material.color.setHex( colorHex );
+
+				} else {
+
+					regionHelper.material.color.copy( getIndexedRandomColor( tile.__depth ) );
+
+				}
 
 			}
 
@@ -905,6 +957,9 @@ export class DebugTilesPlugin {
 
 		// Update the materials to align with the settings
 		this._updateMaterial( scene );
+
+		// Force bound update in case we are in visibility mode
+		this._onTileVisibilityChange( tile, tile.__visible );
 
 	}
 

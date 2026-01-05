@@ -906,6 +906,8 @@ export class TilesRenderer extends TilesRendererBase {
 
 		if ( visible ) {
 
+			// console.log('adding tile to scene', scene);
+
 			if ( scene ) {
 
 				group.add( scene );
@@ -916,6 +918,8 @@ export class TilesRenderer extends TilesRendererBase {
 		} else {
 
 			if ( scene ) {
+
+				console.log('removing tile from scene');
 
 				group.remove( scene );
 

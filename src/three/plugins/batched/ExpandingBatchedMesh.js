@@ -1,11 +1,12 @@
 import { Mesh, Box3, Sphere } from 'three';
 import { ModelViewBatchedMesh } from './ModelViewBatchedMesh.js';
+import { BatchedMesh } from 'three';
 
 const _raycastMesh = /* @__PURE__ */ new Mesh();
 const _batchIntersects = [];
 
 // Implementation of BatchedMesh that automatically expands
-export class ExpandingBatchedMesh extends ModelViewBatchedMesh {
+export class ExpandingBatchedMesh extends BatchedMesh {
 
 	constructor( ...args ) {
 
@@ -97,6 +98,8 @@ export class ExpandingBatchedMesh extends ModelViewBatchedMesh {
 			reservedIndexRange = Math.max( reservedIndexRange, index ? index.count : 0 );
 
 			if ( needsMoreSpace() ) {
+
+				console.log('!!!!!!!!!!!!!!!!! needs more space !!!!!!!!!!!!!!!!!');
 
 				// shift all the unused geometries to try to make space
 				_freeGeometryIds.forEach( id => this.deleteGeometry( id ) );

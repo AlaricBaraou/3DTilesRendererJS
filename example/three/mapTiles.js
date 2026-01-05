@@ -4,7 +4,7 @@ import {
 	PerspectiveCamera,
 } from 'three';
 import { TilesRenderer, GlobeControls, EnvironmentControls } from '3d-tiles-renderer';
-import { TilesFadePlugin, UpdateOnChangePlugin, XYZTilesPlugin, } from '3d-tiles-renderer/plugins';
+import { DebugTilesPlugin, TilesFadePlugin, UpdateOnChangePlugin, XYZTilesPlugin, } from '3d-tiles-renderer/plugins';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 let controls, scene, renderer;
@@ -75,8 +75,16 @@ function initTiles() {
 
 	// tiles
 	tiles = new TilesRenderer();
-	tiles.registerPlugin( new TilesFadePlugin( { maximumFadeOutTiles: 200 } ) );
+	// tiles.registerPlugin( new TilesFadePlugin( { maximumFadeOutTiles: 200 } ) );
 	tiles.registerPlugin( new UpdateOnChangePlugin() );
+	// tiles.registerPlugin( new DebugTilesPlugin( {
+	// 		enabled: true,
+	// 		displayBoxBounds: true, // Shows the bounding box of the tile (Calculated by XYZ scheme)
+	// 		displaySphereBounds: true, // <--- Enable this
+	// 		displayRegionBounds: true, // <--- Enable this (Crucial for Geo tiles)
+	// 		colorMode: DebugTilesPlugin.ColorModes.RANDOM_COLOR, // Random colors for loaded meshes
+	// 		displayParentBounds: false,
+	// 	} ) );
 	tiles.registerPlugin( new XYZTilesPlugin( {
 		center: true,
 		shape: params.planar ? 'planar' : 'ellipsoid',
