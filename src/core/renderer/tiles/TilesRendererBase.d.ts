@@ -12,11 +12,12 @@ export class TilesRendererBase {
 	errorThreshold : number;
 	displayActiveTiles : boolean;
 	maxDepth : number;
+	loadSiblings : number;
+	optimizedLoadStrategy : number;
 
 	loadProgress: number;
 
 	fetchOptions : RequestInit;
-	preprocessURL : ( ( uri: string | URL ) => string ) | null;
 
 	lruCache : LRUCache;
 	parseQueue : PriorityQueue;
