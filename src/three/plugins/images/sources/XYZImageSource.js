@@ -22,6 +22,8 @@ export class XYZImageSource extends TiledImageSource {
 
 	getUrl( x, y, level ) {
 
+		console.log('[XYZImageSource] Generating URL for tile:', x, y, level);
+
 		return this.url
 			.replace( /{\s*z\s*}/gi, level )
 			.replace( /{\s*x\s*}/gi, x )
@@ -30,6 +32,8 @@ export class XYZImageSource extends TiledImageSource {
 	}
 
 	init() {
+
+		console.log('[XYZImageSource] Initializing with URL template:');
 
 		// transform the url
 		const { tiling, tileDimension, levels, url } = this;

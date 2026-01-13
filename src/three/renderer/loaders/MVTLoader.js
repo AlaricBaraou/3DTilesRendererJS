@@ -305,354 +305,354 @@ export class MVTLoader extends MVTLoaderBase {
 
 	}
 
-	parse( buffer ) {
+	// parse( buffer ) {
 
-		return super.parse( buffer ).then( async ( result ) => {
+	// 	return super.parse( buffer ).then( async ( result ) => {
 
-			const { vectorTile } = result;
-			const group = new Group();
-			group.name = 'MVTScene';
+	// 		const { vectorTile } = result;
+	// 		const group = new Group();
+	// 		group.name = 'MVTScene';
 
-			const flatCoordinates = [];
-			const holeIndices = [];
-			const polygons = [];
+	// 		const flatCoordinates = [];
+	// 		const holeIndices = [];
+	// 		const polygons = [];
 
-			for ( const layerName in vectorTile.layers ) {
+	// 		for ( const layerName in vectorTile.layers ) {
 
-				let isTransparent = false;
-				let layerIndex = 0;
+	// 			let isTransparent = false;
+	// 			let layerIndex = 0;
 
-				const layer = vectorTile.layers[ layerName ];
-				// console.log( 'layer.extent', layer.extent );
+	// 			const layer = vectorTile.layers[ layerName ];
+	// 			// console.log( 'layer.extent', layer.extent );
 
-				if ( layerName.endsWith( '_overlay' ) ) {
+	// 			if ( layerName.endsWith( '_overlay' ) ) {
 
-					isTransparent = true;
-					layerIndex = 0.12; // draw just before labels, on top of the rest
+	// 				isTransparent = true;
+	// 				layerIndex = 0.12; // draw just before labels, on top of the rest
 
-				} else if ( layerName.endsWith( '_label' ) ) {
+	// 			} else if ( layerName.endsWith( '_label' ) ) {
 
-					layerIndex = 0.1; // draw on top of everything else (labels)
+	// 				layerIndex = 0.1; // draw on top of everything else (labels)
 
-				} else {
+	// 			} else {
 
-					let layerIndex = LAYER_STACK.indexOf( layerName );
-					if ( layerIndex === - 1 ) {
+	// 				let layerIndex = LAYER_STACK.indexOf( layerName );
+	// 				if ( layerIndex === - 1 ) {
 
 
-						console.log( 'layerName not found in LAYER_STACK:', layerName );
-						layerIndex = 0; // draw on top if not found to debug
+	// 					console.log( 'layerName not found in LAYER_STACK:', layerName );
+	// 					layerIndex = 0; // draw on top if not found to debug
 
-					}
+	// 				}
 
-				}
+	// 			}
 
-				const pointsPositions = [];
-				const linePositions = [];
-				const meshPositions = [];
-				const meshIndices = [];
+	// 			const pointsPositions = [];
+	// 			const linePositions = [];
+	// 			const meshPositions = [];
+	// 			const meshIndices = [];
 
-				// Track meshVertexCount implicitly via meshPositions.length / 3
+	// 			// Track meshVertexCount implicitly via meshPositions.length / 3
 
-				for ( let i = 0; i < layer.length; i ++ ) {
+	// 			for ( let i = 0; i < layer.length; i ++ ) {
 
-					const feature = layer.feature( i );
-					if ( ! this.filter( feature, layerName ) ) continue;
+	// 				const feature = layer.feature( i );
+	// 				if ( ! this.filter( feature, layerName ) ) continue;
 
-					// Load geometry once
-					const geometry = feature.loadGeometry();
-					const type = feature.type;
+	// 				// Load geometry once
+	// 				const geometry = feature.loadGeometry();
+	// 				const type = feature.type;
 
-					// --- TYPE 1: POINTS ---
-					if ( type === 1 ) {
+	// 				// --- TYPE 1: POINTS ---
+	// 				if ( type === 1 ) {
 
-						// Optimization: for..of loop avoids closure allocation of .forEach
-						for ( const multiPoint of geometry ) {
+	// 					// Optimization: for..of loop avoids closure allocation of .forEach
+	// 					for ( const multiPoint of geometry ) {
 
-							for ( const p of multiPoint ) {
+	// 						for ( const p of multiPoint ) {
 
-								if ( p.x < 0 || p.x > 4096 || p.y < 0 || p.y > 4096 ) continue;
-								pointsPositions.push( p.x, - p.y, 0 );
+	// 							if ( p.x < 0 || p.x > 4096 || p.y < 0 || p.y > 4096 ) continue;
+	// 							pointsPositions.push( p.x, - p.y, 0 );
 
-							}
+	// 						}
 
-						}
+	// 					}
 
-					}
+	// 				}
 
-					// --- TYPE 2: LINES ---
-					else if ( type === 2 ) {
+	// 				// --- TYPE 2: LINES ---
+	// 				else if ( type === 2 ) {
 
-						for ( const ring of geometry ) {
+	// 					for ( const ring of geometry ) {
 
-							const len = ring.length;
-							for ( let j = 0; j < len - 1; j ++ ) {
+	// 						const len = ring.length;
+	// 						for ( let j = 0; j < len - 1; j ++ ) {
 
-								// Clip the segment
-								const clipped = clipLinePoints( ring[ j ], ring[ j + 1 ] );
+	// 							// Clip the segment
+	// 							const clipped = clipLinePoints( ring[ j ], ring[ j + 1 ] );
 
-								// If line is completely outside, clipped is null
-								if ( clipped ) {
+	// 							// If line is completely outside, clipped is null
+	// 							if ( clipped ) {
 
-									linePositions.push( clipped[ 0 ].x, - clipped[ 0 ].y, 0 );
-									linePositions.push( clipped[ 1 ].x, - clipped[ 1 ].y, 0 );
+	// 								linePositions.push( clipped[ 0 ].x, - clipped[ 0 ].y, 0 );
+	// 								linePositions.push( clipped[ 1 ].x, - clipped[ 1 ].y, 0 );
 
-								}
+	// 							}
 
-							}
+	// 						}
 
-						}
+	// 					}
 
-					}
+	// 				}
 
-					// --- TYPE 3: POLYGONS ---
-					else if ( type === 3 ) {
+	// 				// --- TYPE 3: POLYGONS ---
+	// 				else if ( type === 3 ) {
 
-						polygons.length = 0; // Clear reused array
+	// 					polygons.length = 0; // Clear reused array
 
-						const clippedRings = [];
+	// 					const clippedRings = [];
 
-						for ( const ring of geometry ) {
+	// 					for ( const ring of geometry ) {
 
-							const clipped = clipPolygonRing( ring );
-							// Only keep rings that still have area
-							if ( clipped.length >= 3 ) {
+	// 						const clipped = clipPolygonRing( ring );
+	// 						// Only keep rings that still have area
+	// 						if ( clipped.length >= 3 ) {
 
-								clippedRings.push( clipped );
+	// 							clippedRings.push( clipped );
 
-							}
+	// 						}
 
-						}
+	// 					}
 
-						// 2. Group rings (using the CLIPPED rings now)
-						let currentPoly = null;
+	// 					// 2. Group rings (using the CLIPPED rings now)
+	// 					let currentPoly = null;
 
-						for ( const ring of clippedRings ) { // <--- Iterate clippedRings
+	// 					for ( const ring of clippedRings ) { // <--- Iterate clippedRings
 
-							if ( this.isExterior( ring ) ) {
+	// 						if ( this.isExterior( ring ) ) {
 
-								currentPoly = { exterior: ring, holes: [] };
-								polygons.push( currentPoly );
+	// 							currentPoly = { exterior: ring, holes: [] };
+	// 							polygons.push( currentPoly );
 
-							} else {
+	// 						} else {
 
-								if ( currentPoly ) {
+	// 							if ( currentPoly ) {
 
-									currentPoly.holes.push( ring );
+	// 								currentPoly.holes.push( ring );
 
-								}
+	// 							}
 
-							}
+	// 						}
 
-						}
+	// 					}
 
-						// Triangulate
-						for ( const poly of polygons ) {
+	// 					// Triangulate
+	// 					for ( const poly of polygons ) {
 
-							// Reset scratch buffers
-							flatCoordinates.length = 0;
-							holeIndices.length = 0;
+	// 						// Reset scratch buffers
+	// 						flatCoordinates.length = 0;
+	// 						holeIndices.length = 0;
 
-							// 1. Flatten Data
-							const exterior = poly.exterior;
-							for ( let k = 0; k < exterior.length; k ++ ) {
+	// 						// 1. Flatten Data
+	// 						const exterior = poly.exterior;
+	// 						for ( let k = 0; k < exterior.length; k ++ ) {
 
-								flatCoordinates.push( exterior[ k ].x, exterior[ k ].y );
+	// 							flatCoordinates.push( exterior[ k ].x, exterior[ k ].y );
 
-							}
+	// 						}
 
-							let indexOffset = flatCoordinates.length / 2;
+	// 						let indexOffset = flatCoordinates.length / 2;
 
-							for ( const hole of poly.holes ) {
+	// 						for ( const hole of poly.holes ) {
 
-								holeIndices.push( indexOffset );
-								for ( let k = 0; k < hole.length; k ++ ) {
+	// 							holeIndices.push( indexOffset );
+	// 							for ( let k = 0; k < hole.length; k ++ ) {
 
-									flatCoordinates.push( hole[ k ].x, hole[ k ].y );
+	// 								flatCoordinates.push( hole[ k ].x, hole[ k ].y );
 
-								}
+	// 							}
 
-								indexOffset += hole.length;
+	// 							indexOffset += hole.length;
 
-							}
+	// 						}
 
-							// 2. Run Earcut
-							const triangles = earcut( flatCoordinates, holeIndices );
+	// 						// 2. Run Earcut
+	// 						const triangles = earcut( flatCoordinates, holeIndices );
 
-							// 3. Process Result
-							// Optimization: "Fast Path" vs "Densification Path"
-							// If densification is OFF, we write directly to the main buffer to avoid double-looping and copying.
+	// 						// 3. Process Result
+	// 						// Optimization: "Fast Path" vs "Densification Path"
+	// 						// If densification is OFF, we write directly to the main buffer to avoid double-looping and copying.
 
-							const currentOffset = meshPositions.length / 3;
+	// 						const currentOffset = meshPositions.length / 3;
 
-							if ( ! ENABLE_DENSIFICATION ) {
+	// 						if ( ! ENABLE_DENSIFICATION ) {
 
-								// --- FAST PATH (Direct Write) ---
+	// 							// --- FAST PATH (Direct Write) ---
 
-								// Push Positions: Convert 2D flat coords to 3D (x, -y, 0)
-								for ( let k = 0; k < flatCoordinates.length; k += 2 ) {
+	// 							// Push Positions: Convert 2D flat coords to 3D (x, -y, 0)
+	// 							for ( let k = 0; k < flatCoordinates.length; k += 2 ) {
 
-									meshPositions.push( flatCoordinates[ k ], - flatCoordinates[ k + 1 ], 0 );
+	// 								meshPositions.push( flatCoordinates[ k ], - flatCoordinates[ k + 1 ], 0 );
 
-								}
+	// 							}
 
-								// Push Indices: Adjust by currentOffset
-								for ( let k = 0; k < triangles.length; k += 3 ) {
+	// 							// Push Indices: Adjust by currentOffset
+	// 							for ( let k = 0; k < triangles.length; k += 3 ) {
 
-									// And we SWAP the last two (k+2, k+1) to flip the normal outward
-									meshIndices.push(
-										triangles[ k ] + currentOffset,
-										triangles[ k + 2 ] + currentOffset,
-										triangles[ k + 1 ] + currentOffset
-									);
+	// 								// And we SWAP the last two (k+2, k+1) to flip the normal outward
+	// 								meshIndices.push(
+	// 									triangles[ k ] + currentOffset,
+	// 									triangles[ k + 2 ] + currentOffset,
+	// 									triangles[ k + 1 ] + currentOffset
+	// 								);
 
-								}
+	// 							}
 
-							} else {
+	// 						} else {
 
-								// --- DENSIFICATION PATH ---
+	// 							// --- DENSIFICATION PATH ---
 
-								// Reconstruct 3D points for the densifier
-								const rawPos = [];
-								for ( let k = 0; k < flatCoordinates.length; k += 2 ) {
+	// 							// Reconstruct 3D points for the densifier
+	// 							const rawPos = [];
+	// 							for ( let k = 0; k < flatCoordinates.length; k += 2 ) {
 
-									rawPos.push( flatCoordinates[ k ], - flatCoordinates[ k + 1 ], 0 );
+	// 								rawPos.push( flatCoordinates[ k ], - flatCoordinates[ k + 1 ], 0 );
 
-								}
+	// 							}
 
-								// Threshold: ~100-200 ensures roughly 20-40 segments across the tile (4096 extent)
-								// 1000 is arbitrary and worked great so far, it might need to be adjusted by zoom level or something
-								const DENSITY_THRESHOLD = 1400;
-								const densified = densifyGeometry( rawPos, triangles, DENSITY_THRESHOLD );
+	// 							// Threshold: ~100-200 ensures roughly 20-40 segments across the tile (4096 extent)
+	// 							// 1000 is arbitrary and worked great so far, it might need to be adjusted by zoom level or something
+	// 							const DENSITY_THRESHOLD = 1400;
+	// 							const densified = densifyGeometry( rawPos, triangles, DENSITY_THRESHOLD );
 
-								// Copy densified result to main buffer
-								for ( let k = 0; k < densified.positions.length; k ++ ) {
+	// 							// Copy densified result to main buffer
+	// 							for ( let k = 0; k < densified.positions.length; k ++ ) {
 
-									meshPositions.push( densified.positions[ k ] );
+	// 								meshPositions.push( densified.positions[ k ] );
 
-								}
+	// 							}
 
-								for ( let k = 0; k < densified.indices.length; k += 3 ) {
+	// 							for ( let k = 0; k < densified.indices.length; k += 3 ) {
 
-									meshIndices.push(
-										densified.indices[ k ] + currentOffset,
-										densified.indices[ k + 2 ] + currentOffset,
-										densified.indices[ k + 1 ] + currentOffset
-									);
+	// 								meshIndices.push(
+	// 									densified.indices[ k ] + currentOffset,
+	// 									densified.indices[ k + 2 ] + currentOffset,
+	// 									densified.indices[ k + 1 ] + currentOffset
+	// 								);
 
-								}
+	// 							}
 
-							}
+	// 						}
 
-						}
+	// 					}
 
-					}
+	// 				}
 
-				}
+	// 			}
 
-				// --- BUILD MESHES ---
+	// 			// --- BUILD MESHES ---
 
-				// 1. Points
-				if ( pointsPositions.length > 0 ) {
+	// 			// 1. Points
+	// 			// if ( pointsPositions.length > 0 ) {
 
-					const geometry = new BufferGeometry();
-					geometry.setAttribute( 'position', new Float32BufferAttribute( pointsPositions, 3 ) );
-					const points = new Points( geometry, this.defaultPointsMaterial );
-					points.renderOrder = - 0.1;
-					points.name = layerName + '_points';
-					points.raycast = () => false;
-					group.add( points );
+	// 			// 	const geometry = new BufferGeometry();
+	// 			// 	geometry.setAttribute( 'position', new Float32BufferAttribute( pointsPositions, 3 ) );
+	// 			// 	const points = new Points( geometry, this.defaultPointsMaterial );
+	// 			// 	points.renderOrder = - 0.1;
+	// 			// 	points.name = layerName + '_points';
+	// 			// 	points.raycast = () => false;
+	// 			// 	group.add( points );
 
-				}
+	// 			// }
 
-				// 2. Lines
-				// 2. Lines
-				if ( linePositions.length > 0 ) {
+	// 			// 2. Lines
+	// 			// 2. Lines
+	// 			// if ( linePositions.length > 0 ) {
 
-					const geometry = new BufferGeometry();
-					geometry.setAttribute( 'position', new Float32BufferAttribute( linePositions, 3 ) );
+	// 			// 	const geometry = new BufferGeometry();
+	// 			// 	geometry.setAttribute( 'position', new Float32BufferAttribute( linePositions, 3 ) );
 					
-					// CLONE material so we can set a unique color
-					const lines = new LineSegments( geometry, this.defaultLineMaterial.clone() );
+	// 			// 	// CLONE material so we can set a unique color
+	// 			// 	const lines = new LineSegments( geometry, this.defaultLineMaterial.clone() );
 					
-					// RENDER ORDER:
-					// Polygons are at (-layerIndex - 1) which is usually < -1.
-					// We put lines at 0 or 1 to ensure they sit ON TOP of all land/water polygons.
-					// If you want lines sorted by layer too, you could use (-layerIndex + 0.1).
-					lines.renderOrder = 1; 
+	// 			// 	// RENDER ORDER:
+	// 			// 	// Polygons are at (-layerIndex - 1) which is usually < -1.
+	// 			// 	// We put lines at 0 or 1 to ensure they sit ON TOP of all land/water polygons.
+	// 			// 	// If you want lines sorted by layer too, you could use (-layerIndex + 0.1).
+	// 			// 	lines.renderOrder = 1; 
 
-					lines.name = layerName + '_lines';
-					lines.raycast = () => false;
+	// 			// 	lines.name = layerName + '_lines';
+	// 			// 	lines.raycast = () => false;
 
-					// --- COLOR LOGIC FOR LINES ---
-					let layerColor = LAYER_COLORS[ layerName ];
+	// 			// 	// --- COLOR LOGIC FOR LINES ---
+	// 			// 	let layerColor = LAYER_COLORS[ layerName ];
 					
-					// Special handling for 'admin' if you want it distinct
-					// (The list already has 'admin': 0xff0000)
+	// 			// 	// Special handling for 'admin' if you want it distinct
+	// 			// 	// (The list already has 'admin': 0xff0000)
 
-					if ( ! layerColor ) {
-						// Fallback: If it's a road or transport that isn't explicitly named
-						if( layerName.includes('road') || layerName.includes('transport') ) {
-							layerColor = LAYER_COLORS['road'];
-						} else {
-							// Default fallback
-							layerColor = LAYER_COLORS['default'];
-						}
-					}
+	// 			// 	if ( ! layerColor ) {
+	// 			// 		// Fallback: If it's a road or transport that isn't explicitly named
+	// 			// 		if( layerName.includes('road') || layerName.includes('transport') ) {
+	// 			// 			layerColor = LAYER_COLORS['road'];
+	// 			// 		} else {
+	// 			// 			// Default fallback
+	// 			// 			layerColor = LAYER_COLORS['default'];
+	// 			// 		}
+	// 			// 	}
 
-					lines.material.color.setHex( layerColor );
+	// 			// 	lines.material.color.setHex( layerColor );
 					
-					// Optional: Make lines slightly transparent if they are too harsh
-					// lines.material.transparent = true;
-					// lines.material.opacity = 0.8;
+	// 			// 	// Optional: Make lines slightly transparent if they are too harsh
+	// 			// 	// lines.material.transparent = true;
+	// 			// 	// lines.material.opacity = 0.8;
 
-					group.add( lines );
+	// 			// 	group.add( lines );
 
-				}
+	// 			// }
 
-				// 3. Polygons
-				if ( meshPositions.length > 0 ) {
+	// 			// 3. Polygons
+	// 			// if ( meshPositions.length > 0 ) {
 
-					const geometry = new BufferGeometry();
-					geometry.setAttribute( 'position', new Float32BufferAttribute( meshPositions, 3 ) );
-					geometry.setIndex( meshIndices );
+	// 			// 	const geometry = new BufferGeometry();
+	// 			// 	geometry.setAttribute( 'position', new Float32BufferAttribute( meshPositions, 3 ) );
+	// 			// 	geometry.setIndex( meshIndices );
 
-					const mesh = new Mesh( geometry, this.defaultMeshMaterial.clone() );
-					mesh.renderOrder = - layerIndex - 1;
-					mesh.name = layerName + '_mesh';
-					mesh.raycast = () => false;
-					// --- UPDATED COLOR LOGIC ---
-					// Check if we have a color for this layer, otherwise use default
-					let layerColor = LAYER_COLORS[ layerName ]
+	// 			// 	const mesh = new Mesh( geometry, this.defaultMeshMaterial.clone() );
+	// 			// 	mesh.renderOrder = - layerIndex - 1;
+	// 			// 	mesh.name = layerName + '_mesh';
+	// 			// 	mesh.raycast = () => false;
+	// 			// 	// --- UPDATED COLOR LOGIC ---
+	// 			// 	// Check if we have a color for this layer, otherwise use default
+	// 			// 	let layerColor = LAYER_COLORS[ layerName ]
 
-					console.log('layerColor for', layerName, ':', layerColor);
+	// 			// 	console.log('layerColor for', layerName, ':', layerColor);
 					
-					if(!layerColor){
-						console.warn('No color defined for layer:', layerName);
-						layerColor = LAYER_COLORS[ 'default' ];
-					}
+	// 			// 	if(!layerColor){
+	// 			// 		console.warn('No color defined for layer:', layerName);
+	// 			// 		layerColor = LAYER_COLORS[ 'default' ];
+	// 			// 	}
 
-					if ( isTransparent ) {
+	// 			// 	if ( isTransparent ) {
 
-						mesh.material.transparent = true;
-						mesh.material.opacity = 0.6;
+	// 			// 		mesh.material.transparent = true;
+	// 			// 		mesh.material.opacity = 0.6;
 
-					}
+	// 			// 	}
 
-					mesh.material.color.setHex( layerColor );
-					group.add( mesh );
+	// 			// 	mesh.material.color.setHex( layerColor );
+	// 			// 	group.add( mesh );
 
-				}
+	// 			// }
 
-			}
+	// 		}
 
-			result.scene = group;
-			result.scene.vectorTile = vectorTile;
-			return result;
+	// 		result.scene = group;
+	// 		result.scene.vectorTile = vectorTile;
+	// 		return result;
 
-		} );
+	// 	} );
 
-	}
+	// }
 
 	// Helper to calculate signed area of a ring to determine winding order
 	// Returns true if CW (Exterior), false if CCW (Interior/Hole)

@@ -10,6 +10,7 @@ export * from './batched/BatchedTilesPlugin.js';
 export * from './TileFlatteningPlugin.js';
 export * from './QuantizedMeshPlugin.js';
 export * from './images/ImageOverlayPlugin.js';
+export * from './images/MVTOverlay.js';
 export * from './LoadRegionPlugin.js';
 export * from './DebugTilesPlugin.js';
 

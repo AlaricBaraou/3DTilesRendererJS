@@ -6,6 +6,7 @@ import {
 import { TilesRenderer, GlobeControls, EnvironmentControls } from '3d-tiles-renderer';
 import { DebugTilesPlugin, TilesFadePlugin, UpdateOnChangePlugin, XYZTilesPlugin, } from '3d-tiles-renderer/plugins';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { MVTTilesPlugin } from '../../src/three/plugins/images/EPSGTilesPlugin';
 
 let controls, scene, renderer;
 let tiles, camera;
@@ -85,10 +86,76 @@ function initTiles() {
 	// 		colorMode: DebugTilesPlugin.ColorModes.RANDOM_COLOR, // Random colors for loaded meshes
 	// 		displayParentBounds: false,
 	// 	} ) );
-	tiles.registerPlugin( new XYZTilesPlugin( {
+	const apiKey =
+			"pk.eyJ1IjoiYWxhcmljYiIsImEiOiJjbTk4NGJoeW4wMnJ6MnJvZ2l6am5ldDNxIn0.qflHGE_i0rbp8PLuIWT7ug"
+
+	tiles.registerPlugin( new MVTTilesPlugin( {
 		center: true,
-		shape: params.planar ? 'planar' : 'ellipsoid',
-		url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+		shape: 'planar',
+		url: `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${apiKey}`,
+		// Filter: Exactly what you had before
+		filter: ( feature, layerName ) => {
+
+			const props = feature.properties;
+
+			// Example: Only countries and major water
+			// if ( layerName === 'water' ) return true;
+			// if ( layerName === 'admin' && props.admin_level <= 0 ) return true; // Countries
+			// return false;
+
+			if ( layerName === 'water' ) {
+
+				return true;
+
+			}
+
+			// 1. Administrative Borders
+			if ( layerName === 'admin' ) {
+
+				// admin_level 0 = Country Borders
+				// admin_level 1 = First level (States, Provinces)
+				// Use <= 0 if you ONLY want Country borders.
+				// Use <= 1 if you want Countries + States.
+				return props.admin_level <= 1;
+
+			}
+
+			// 2. Labels (Countries & Cities)
+			if ( layerName === 'place_label' ) {
+
+				// A. Keep Country Labels
+				if ( props.class === 'country' ) {
+
+					return true;
+
+				}
+
+				// B. Keep Major Cities
+				// Keep only "Major" cities (Rank 1 to 4)
+				// Adjust this number:
+				// < 4 = Very sparse (Paris, London, NYC)
+				// < 6 = Good balance (Includes Lyon, Manchester, etc.)
+				// < 10 = Crowded (Includes Bareilly, etc.)
+				if ( props.symbolrank <= 3 ) {
+
+					return true;
+
+				}
+
+				// console.log('props.class', props.class)
+
+				// A specialized case: State/Province labels (optional)
+				// if ( props.class === 'state' ) return true;
+
+				return false;
+
+			}
+
+			// 3. Clutter Removal
+			// Return false for roads, water, buildings, pois, etc.
+			return false;
+
+		}
 	} ) );
 
 	tiles.lruCache.minSize = 900;
