@@ -16,7 +16,6 @@ export class PMTilesImageSource {
 
 	init(): Promise<void>;
 	getUrl( x: number, y: number, level: number ): string;
-	fetchInternal( url: string, options: { signal?: AbortSignal } ): Promise<ArrayBuffer | null>;
-	processBufferToTexture( buffer: ArrayBuffer ): Promise<Texture>;
+	fetchItem( tokens: [ number, number, number ], signal?: AbortSignal ): Promise<Texture>;
 
 }

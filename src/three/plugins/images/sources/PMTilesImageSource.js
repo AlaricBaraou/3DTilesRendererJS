@@ -1,6 +1,6 @@
 import { MVTImageSource } from './MVTImageSource.js';
-import { PMTilesFetcher } from './fetchers/PMTilesFetcher.js';
 import { ProjectionScheme } from '../utils/ProjectionScheme.js';
+import { PMTiles } from 'pmtiles';
 
 export class PMTilesImageSource extends MVTImageSource {
 
@@ -8,49 +8,53 @@ export class PMTilesImageSource extends MVTImageSource {
 
 		super( options );
 
-		// Use composed fetcher
-		this._fetcher = new PMTilesFetcher( { url: options.url } );
+		this.pmtilesUrl = options.url.replace( /^pmtiles:\/\//, '' );
+		this.instance = new PMTiles( this.pmtilesUrl );
 		this.tiling.flipY = true;
-
-	}
-
-	get pmtilesUrl() {
-
-		return this._fetcher.pmtilesUrl;
-
-	}
-
-	get instance() {
-
-		return this._fetcher.instance;
 
 	}
 
 	getUrl( x, y, level ) {
 
-		return this._fetcher.getUrl( x, y, level );
+		return `pmtiles://${level}/${x}/${y}`;
 
 	}
 
 	async init() {
 
-		const metadata = await this._fetcher.init();
+		const header = await this.instance.getHeader();
 		this.tiling.setProjection( new ProjectionScheme( 'EPSG:3857' ) );
-		this.tiling.generateLevels( metadata.maxZoom, this.tiling.projection.tileCountX, this.tiling.projection.tileCountY, {
+		this.tiling.generateLevels( header.maxZoom, this.tiling.projection.tileCountX, this.tiling.projection.tileCountY, {
 			tilePixelWidth: this.tileDimension,
 			tilePixelHeight: this.tileDimension,
 		} );
 
 	}
 
-	async fetchInternal( url, options ) {
+	// Override fetchItem to fetch directly from PMTiles archive (bypasses plugin fetchData chain)
+	fetchItem( tokens, signal ) {
 
-		const parts = url.split( '/' );
-		const y = parseInt( parts.pop() );
-		const x = parseInt( parts.pop() );
-		const z = parseInt( parts.pop() );
+		const [ x, y, level ] = tokens;
 
-		return this._fetcher.fetchTile( x, y, z, options.signal );
+		return this.instance.getZxy( level, x, y, signal )
+			.then( res => {
+
+				if ( ! res || ! res.data ) {
+
+					return this._createEmptyTexture();
+
+				}
+
+				// res.data is Uint8Array - convert to ArrayBuffer for processBufferToTexture
+				const data = res.data;
+				const buffer = data.buffer.slice(
+					data.byteOffset,
+					data.byteOffset + data.byteLength
+				);
+
+				return this.processBufferToTexture( buffer );
+
+			} );
 
 	}
 
