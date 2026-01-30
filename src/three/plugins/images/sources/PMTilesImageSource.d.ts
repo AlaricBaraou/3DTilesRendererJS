@@ -1,0 +1,22 @@
+import { ColorRepresentation, Texture } from 'three';
+import { PMTiles } from 'pmtiles';
+
+export class PMTilesImageSource {
+
+	readonly pmtilesUrl: string;
+	readonly instance: PMTiles;
+
+	constructor( options: {
+		url: string,
+		tileDimension?: number,
+		filter?: ( feature: any, layerName: string ) => boolean,
+		styles?: { [ layerName: string ]: ColorRepresentation },
+		fetchOptions?: RequestInit,
+	} );
+
+	init(): Promise<void>;
+	getUrl( x: number, y: number, level: number ): string;
+	fetchInternal( url: string, options: { signal?: AbortSignal } ): Promise<ArrayBuffer | null>;
+	processBufferToTexture( buffer: ArrayBuffer ): Promise<Texture>;
+
+}

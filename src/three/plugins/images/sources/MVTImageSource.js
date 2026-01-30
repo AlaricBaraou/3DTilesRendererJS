@@ -56,7 +56,7 @@ export class MVTImageSource extends XYZImageSource {
 		const layerOrder = [
 			'landuse', 'park', 'water', 'waterway',
 			'transportation', 'road', 'building',
-			'admin', 'poi', 'place_label'
+			'boundaries', 'poi', 'place_label'
 		];
 
 		const layersToDraw = Object.keys( vectorTile.layers ).sort( ( a, b ) => {

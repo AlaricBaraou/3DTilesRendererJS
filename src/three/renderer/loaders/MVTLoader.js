@@ -276,7 +276,7 @@ const ENABLE_DENSIFICATION = true;
 const LAYER_STACK = [
 	'place_label',
 	'poi',
-	'admin',
+	'boundaries',
 	'building',
 	'road',
 	'transportation',

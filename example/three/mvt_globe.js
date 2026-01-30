@@ -12,15 +12,16 @@ import {
 import {
 	UpdateOnChangePlugin,
 	MVTTilesPlugin,
-	MVTTilesMeshPlugin
+	MVTTilesMeshPlugin,
+	PMTilesPlugin
 } from '3d-tiles-renderer/plugins';
 
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 let scene, renderer, camera, controls, tiles, gui;
 
-const apiKey = localStorage.getItem( 'mapbox_key' ) || prompt( 'Enter Mapbox API Key' );
-if ( apiKey ) localStorage.setItem( 'mapbox_key', apiKey );
+// const apiKey = localStorage.getItem( 'mapbox_key' ) || prompt( 'Enter Mapbox API Key' );
+// if ( apiKey ) localStorage.setItem( 'mapbox_key', apiKey );
 
 // --- Dynamic Filter State ---
 const state = {
@@ -41,13 +42,13 @@ const state = {
 		landuse: '#caedc1',
 		building: '#eeeeee',
 		road: '#444444',
-		admin: '#ff0000',
+		boundaries: '#ff0000',
 		poi: '#ffcc00',
 		default: '#222222'
 	}
 };
 
-const MVT_URL = `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${apiKey}`;
+// const MVT_URL = `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${apiKey}`;
 
 init();
 setupGUI();
@@ -90,10 +91,10 @@ function mvtFilter( feature, layerName ) {
 	if ( layerName === 'landuse' && ! state.showLanduse ) return false;
 
 	// 2. Advanced Admin Filtering
-	if ( layerName === 'admin' ) {
+	if ( layerName === 'boundaries' ) {
 
 		if ( ! state.showAdmin ) return false;
-		return props.admin_level <= state.maxAdminLevel;
+		return true;
 
 	}
 
@@ -120,6 +121,8 @@ function recreateTiles() {
 
 	}
 
+	const PMTILES_URL = 'https://demo-bucket.protomaps.com/v4.pmtiles';
+
 	tiles = new TilesRenderer();
 	tiles.registerPlugin( new UpdateOnChangePlugin() );
 
@@ -128,20 +131,22 @@ function recreateTiles() {
 		shape: 'ellipsoid',
 		levels: 15,
 		tileDimension: 512,
-		url: MVT_URL,
+		url: PMTILES_URL,
 		styles: state.colors,
 		filter: mvtFilter
 	};
 
-	if ( state.pluginType === 'Mesh' ) {
+	tiles.registerPlugin( new PMTilesPlugin( pluginOptions ) );
 
-		tiles.registerPlugin( new MVTTilesMeshPlugin( pluginOptions ) );
+	// if ( state.pluginType === 'Mesh' ) {
 
-	} else {
+	// 	tiles.registerPlugin( new MVTTilesMeshPlugin( pluginOptions ) );
 
-		tiles.registerPlugin( new MVTTilesPlugin( pluginOptions ) );
+	// } else {
 
-	}
+	// 	tiles.registerPlugin( new MVTTilesPlugin( pluginOptions ) );
+
+	// }
 
 	tiles.group.rotation.x = - Math.PI / 2;
 	tiles.setCamera( camera );
