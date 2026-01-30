@@ -45,14 +45,8 @@ export class PMTilesImageSource extends MVTImageSource {
 
 				}
 
-				// res.data is Uint8Array - convert to ArrayBuffer for processBufferToTexture
-				const data = res.data;
-				const buffer = data.buffer.slice(
-					data.byteOffset,
-					data.byteOffset + data.byteLength
-				);
-
-				return this.processBufferToTexture( buffer );
+				// res.data is ArrayBuffer per PMTiles API
+				return this.processBufferToTexture( res.data );
 
 			} );
 

@@ -32,17 +32,8 @@ export class PMTilesPlugin extends EllipsoidProjectionTilesPlugin {
 
 					}
 
-					const data = res.data;
-
-					// Handle both ArrayBuffer and Uint8Array
-					if ( data instanceof ArrayBuffer ) {
-
-						return data;
-
-					}
-
-					// Uint8Array - copy to new ArrayBuffer to avoid shared buffer issues
-					return data.slice().buffer;
+					// res.data is ArrayBuffer per PMTiles API
+					return res.data;
 
 				} );
 
