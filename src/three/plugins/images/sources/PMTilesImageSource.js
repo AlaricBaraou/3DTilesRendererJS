@@ -1,6 +1,6 @@
 import { MVTImageSource } from './MVTImageSource.js';
 import { ProjectionScheme } from '../utils/ProjectionScheme.js';
-import { PMTiles } from 'pmtiles';
+import { PMTilesLoaderBase } from '../../../../core/renderer/loaders/PMTilesLoaderBase.js';
 
 export class PMTilesImageSource extends MVTImageSource {
 
@@ -8,21 +8,33 @@ export class PMTilesImageSource extends MVTImageSource {
 
 		super( options );
 
-		this.pmtilesUrl = options.url.replace( /^pmtiles:\/\//, '' );
-		this.instance = new PMTiles( this.pmtilesUrl );
+		this.pmtilesLoader = new PMTilesLoaderBase();
 		this.tiling.flipY = true;
+
+	}
+
+	// Expose for backward compatibility
+	get pmtilesUrl() {
+
+		return this.pmtilesLoader.url;
+
+	}
+
+	get instance() {
+
+		return this.pmtilesLoader.instance;
 
 	}
 
 	getUrl( x, y, level ) {
 
-		return `pmtiles://${level}/${x}/${y}`;
+		return this.pmtilesLoader.getUrl( level, x, y );
 
 	}
 
 	async init() {
 
-		const header = await this.instance.getHeader();
+		const header = await this.pmtilesLoader.init( this.url );
 		this.tiling.setProjection( new ProjectionScheme( 'EPSG:3857' ) );
 		this.tiling.generateLevels( header.maxZoom, this.tiling.projection.tileCountX, this.tiling.projection.tileCountY, {
 			tilePixelWidth: this.tileDimension,
@@ -36,17 +48,16 @@ export class PMTilesImageSource extends MVTImageSource {
 
 		const [ x, y, level ] = tokens;
 
-		return this.instance.getZxy( level, x, y, signal )
-			.then( res => {
+		return this.pmtilesLoader.getTile( level, x, y, signal )
+			.then( buffer => {
 
-				if ( ! res || ! res.data ) {
+				if ( ! buffer ) {
 
 					return this._createEmptyTexture();
 
 				}
 
-				// res.data is ArrayBuffer per PMTiles API
-				return this.processBufferToTexture( res.data );
+				return this.processBufferToTexture( buffer );
 
 			} );
 

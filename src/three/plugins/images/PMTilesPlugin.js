@@ -1,5 +1,6 @@
 import { EllipsoidProjectionTilesPlugin } from './EllipsoidProjectionTilesPlugin.js';
 import { PMTilesImageSource } from './sources/PMTilesImageSource.js';
+import { PMTilesLoaderBase } from '../../../core/renderer/loaders/PMTilesLoaderBase.js';
 
 export class PMTilesPlugin extends EllipsoidProjectionTilesPlugin {
 
@@ -18,24 +19,10 @@ export class PMTilesPlugin extends EllipsoidProjectionTilesPlugin {
 
 		if ( url.startsWith( 'pmtiles://' ) ) {
 
-			const parts = url.split( '/' );
-			const y = parseInt( parts.pop() );
-			const x = parseInt( parts.pop() );
-			const z = parseInt( parts.pop() );
+			const { z, x, y } = PMTilesLoaderBase.parseUrl( url );
 
-			return this.imageSource.instance.getZxy( z, x, y, options?.signal )
-				.then( res => {
-
-					if ( ! res || ! res.data ) {
-
-						return new ArrayBuffer( 0 );
-
-					}
-
-					// res.data is ArrayBuffer per PMTiles API
-					return res.data;
-
-				} );
+			return this.imageSource.pmtilesLoader.getTile( z, x, y, options?.signal )
+				.then( buffer => buffer || new ArrayBuffer( 0 ) );
 
 		}
 

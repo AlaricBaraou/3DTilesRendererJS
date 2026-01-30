@@ -1,8 +1,10 @@
 import { ColorRepresentation, Texture } from 'three';
 import { PMTiles } from 'pmtiles';
+import { PMTilesLoaderBase } from '../../../../core/renderer/loaders/PMTilesLoaderBase.js';
 
 export class PMTilesImageSource {
 
+	readonly pmtilesLoader: PMTilesLoaderBase;
 	readonly pmtilesUrl: string;
 	readonly instance: PMTiles;
 

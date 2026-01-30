@@ -13,7 +13,8 @@ import {
 	UpdateOnChangePlugin,
 	MVTTilesPlugin,
 	MVTTilesMeshPlugin,
-	PMTilesPlugin
+	PMTilesPlugin,
+	PMTilesMeshPlugin
 } from '3d-tiles-renderer/plugins';
 
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
@@ -210,14 +211,15 @@ function recreateTiles() {
 
 		pluginOptions.url = preset.url;
 
-		// PMTiles currently only supports Texture mode
 		if ( state.renderMode === 'Mesh' ) {
 
-			console.warn( 'PMTiles source currently only supports Texture mode. Using Texture.' );
+			tiles.registerPlugin( new PMTilesMeshPlugin( pluginOptions ) );
+
+		} else {
+
+			tiles.registerPlugin( new PMTilesPlugin( pluginOptions ) );
 
 		}
-
-		tiles.registerPlugin( new PMTilesPlugin( pluginOptions ) );
 
 	} else {
 
