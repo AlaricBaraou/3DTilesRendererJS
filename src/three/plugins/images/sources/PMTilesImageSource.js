@@ -1,29 +1,42 @@
 import { MVTImageSource } from './MVTImageSource.js';
+import { PMTilesFetcher } from './fetchers/PMTilesFetcher.js';
 import { ProjectionScheme } from '../utils/ProjectionScheme.js';
-import { PMTiles } from 'pmtiles';
 
 export class PMTilesImageSource extends MVTImageSource {
 
 	constructor( options = {} ) {
 
 		super( options );
-		this.pmtilesUrl = options.url.replace( /^pmtiles:\/\//, '' );
-		this.instance = new PMTiles( this.pmtilesUrl );
+
+		// Use composed fetcher
+		this._fetcher = new PMTilesFetcher( { url: options.url } );
 		this.tiling.flipY = true;
+
+	}
+
+	get pmtilesUrl() {
+
+		return this._fetcher.pmtilesUrl;
+
+	}
+
+	get instance() {
+
+		return this._fetcher.instance;
 
 	}
 
 	getUrl( x, y, level ) {
 
-		return `pmtiles://${level}/${x}/${y}`;
+		return this._fetcher.getUrl( x, y, level );
 
 	}
 
 	async init() {
 
-		const header = await this.instance.getHeader();
+		const metadata = await this._fetcher.init();
 		this.tiling.setProjection( new ProjectionScheme( 'EPSG:3857' ) );
-		this.tiling.generateLevels( header.maxZoom, this.tiling.projection.tileCountX, this.tiling.projection.tileCountY, {
+		this.tiling.generateLevels( metadata.maxZoom, this.tiling.projection.tileCountX, this.tiling.projection.tileCountY, {
 			tilePixelWidth: this.tileDimension,
 			tilePixelHeight: this.tileDimension,
 		} );
@@ -32,36 +45,12 @@ export class PMTilesImageSource extends MVTImageSource {
 
 	async fetchInternal( url, options ) {
 
-		console.log( 'Success! Intercepted virtual URL:', url );
-
 		const parts = url.split( '/' );
 		const y = parseInt( parts.pop() );
 		const x = parseInt( parts.pop() );
 		const z = parseInt( parts.pop() );
 
-		try {
-
-			const res = await this.instance.getZxy( z, x, y, options.signal );
-
-
-			if ( ! res ) {
-
-				console.log( 'PMTiles: Tile not found in archive:', { z, x, y } );
-				return new ArrayBuffer( 0 );
-
-			}
-
-			console.log( 'PMTiles: Tile found in archive:', { z, x, y }, res, res.data, res.data.buffer, typeof res.data );
-
-			return res.data;
-
-		} catch ( e ) {
-
-			if ( e.name === 'AbortError' ) throw e;
-			console.error( 'PMTiles Fetch Error:', e );
-			return null;
-
-		}
+		return this._fetcher.fetchTile( x, y, z, options.signal );
 
 	}
 

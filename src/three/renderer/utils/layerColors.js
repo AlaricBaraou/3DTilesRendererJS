@@ -17,3 +17,18 @@ export const LAYER_COLORS = {
 	'background': 0x111111,
 	'default': 0x222222
 };
+
+/* Default layer ordering for vector tiles (bottom to top) */
+export const DEFAULT_LAYER_ORDER = [
+	'landuse',
+	'landuse_overlay',
+	'park',
+	'water',
+	'waterway',
+	'transportation',
+	'road',
+	'building',
+	'boundaries',
+	'poi',
+	'place_label'
+];
