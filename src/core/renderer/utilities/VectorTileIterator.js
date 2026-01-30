@@ -7,8 +7,9 @@ export class VectorTileIterator {
 
 	}
 
-	*iterateFeatures( vectorTile ) {
+	getFeatures( vectorTile ) {
 
+		const results = [];
 		const layerNames = Object.keys( vectorTile.layers );
 		const sortedLayers = this.styler.sortLayers( layerNames );
 
@@ -22,19 +23,21 @@ export class VectorTileIterator {
 
 				if ( this.styler.shouldIncludeFeature( feature, layerName ) ) {
 
-					yield {
+					results.push( {
 						feature,
 						layerName,
 						layer,
 						geometry: feature.loadGeometry(),
 						type: feature.type, // 1=Point, 2=Line, 3=Polygon
-					};
+					} );
 
 				}
 
 			}
 
 		}
+
+		return results;
 
 	}
 

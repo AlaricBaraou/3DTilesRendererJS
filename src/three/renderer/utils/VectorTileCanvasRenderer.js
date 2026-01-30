@@ -19,7 +19,7 @@ export class VectorTileCanvasRenderer {
 		const ctx = canvas.getContext( '2d' );
 		const scale = this.tileDimension / MVT_EXTENT;
 
-		for ( const { layerName, geometry, type } of this._iterator.iterateFeatures( vectorTile ) ) {
+		for ( const { layerName, geometry, type } of this._iterator.getFeatures( vectorTile ) ) {
 
 			const color = this.styler.getColor( layerName, 'css' );
 			ctx.fillStyle = color;

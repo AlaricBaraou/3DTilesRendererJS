@@ -14,6 +14,6 @@ export class VectorTileIterator {
 
 	constructor( styler: VectorTileStyler );
 
-	iterateFeatures( vectorTile: any ): Generator<FeatureIteratorResult>;
+	getFeatures( vectorTile: any ): FeatureIteratorResult[];
 
 }
